@@ -1,0 +1,50 @@
+{
+  "manifest_version": 3,
+  "name": "英语阅读助手",
+  "version": "0.0.1",
+  "author": "Albert Huang",
+  "permissions": [
+    "storage"
+  ],
+  "action": {
+    "default_icon": {
+      "16": "assets/icon.png",
+      "32": "assets/icon.png",
+      "48": "assets/icon.png",
+      "64": "assets/icon.png",
+      "128": "assets/icon.png"
+    }
+  },
+  "icons": {
+    "16": "assets/icon.png",
+    "32": "assets/icon.png",
+    "48": "assets/icon.png",
+    "64": "assets/icon.png",
+    "128": "assets/icon.png"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.newsinlevels.com/*"
+      ],
+      "js": [
+        "src/NewsInLevles.js"
+      ],
+      "css": [
+        "src/NewsInLevles.css"
+      ],
+      "run_at": "document_end"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "assets/readed.svg",
+        "assets/unread.svg"
+      ],
+      "matches": [
+       "https://www.newsinlevels.com/*"
+      ]
+    }
+  ]
+}
