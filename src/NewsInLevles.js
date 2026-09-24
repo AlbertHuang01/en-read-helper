@@ -123,6 +123,7 @@ function createStatusIcon(link, isRead) {
     img.style.marginLeft = '0.25em';
     img.style.verticalAlign = 'middle';
     img.style.cursor = 'pointer';
+    img.style.filter = 'brightness(0) invert(1)';
 
     img.addEventListener('click', (e) => {
         e.preventDefault();
