@@ -13,7 +13,8 @@
       "48": "assets/icon.png",
       "64": "assets/icon.png",
       "128": "assets/icon.png"
-    }
+    },
+    "default_popup": "src/popup.html"
   },
   "icons": {
     "16": "assets/icon.png",
@@ -34,6 +35,18 @@
         "src/NewsInLevles.css"
       ],
       "run_at": "document_end"
+    },
+    {
+      "matches": [
+        "https://breakingnewsenglish.com/*"
+      ],
+      "js": [
+        "src/BreakingNewsEnglish.js"
+      ],
+      "css": [
+        "src/BreakingNewsEnglish.css"
+      ],
+      "run_at": "document_end"
     }
   ],
   "web_accessible_resources": [
@@ -43,7 +56,7 @@
         "assets/unread.svg"
       ],
       "matches": [
-       "https://www.newsinlevels.com/*"
+        "https://www.newsinlevels.com/*"
       ]
     }
   ]
