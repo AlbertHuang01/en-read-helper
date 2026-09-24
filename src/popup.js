@@ -1,4 +1,4 @@
-/** chrome.storage.local 中 News in Levels 已读记录的键名（导出 JSON 内可见） */
+/** chrome.storage.local 中 News in Levels 已读记录的键名；每项为 { url, markTime } */
 const NEWS_IN_LEVELS_STORAGE_KEY = 'NewsInlevelsStorage';
 
 function formatExportFilename() {

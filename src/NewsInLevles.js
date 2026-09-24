@@ -9,30 +9,43 @@ const UNREAD_ICON = 'assets/unread.svg';
 /** chrome.storage.local 中 News in Levels 已读记录的键名 */
 const NEWS_IN_LEVELS_STORAGE_KEY = 'NewsInlevelsStorage';
 
-/** 统一标题格式，便于 storage 与页面 DOM 文本匹配 */
-function normalizeTitle(title) {
-    return title.trim().replace(/\s+/g, ' ').toLowerCase();
+/**
+ * NewsInlevelsStorage 存 Array<ReadRecord>
+ *
+ * ReadRecord:
+ * - url {string}  某一等级文章页的链接（来自列表/详情 .fancy-buttons 里 Level 按钮的 <a href>，规范化后写入）
+ * - markTime {number}  标记为已读的时间戳（Date.now()，毫秒）
+ *
+ * 同一等级对应唯一 url（如 .../pig-heads-in-paris-level-2），不再使用 title + level。
+ */
+
+/** 将等级按钮 href 规范为统一字符串，避免尾斜杠等差异导致匹配失败 */
+function normalizeArticleUrl(href) {
+    const url = new URL(href, location.href);
+    url.pathname = url.pathname.replace(/\/+$/, '') || '/';
+    return url.href;
 }
 
-/** 写入 storage 的文章标题（保留大小写，仅整理空白） */
-function formatArticleTitle(title) {
-    return title.trim().replace(/\s+/g, ' ');
-}
-
-/** 当前页内存索引：归一化文章标题 -> 已读等级集合 */
-let readLevelsByTitle = new Map();
-
-/** 由 storage 记录构建标题 -> 已读等级 Set 的索引 */
-function buildReadLevelsMap(records) {
-    const map = new Map();
-    for (const item of records) {
-        const key = normalizeTitle(item.title);
-        if (!map.has(key)) {
-            map.set(key, new Set());
-        }
-        map.get(key).add(item.level);
+/** 只保留新格式记录；旧 title/level 数据不迁移，读取时丢弃 */
+function sanitizeRecords(records) {
+    if (!Array.isArray(records)) {
+        return [];
     }
-    return map;
+    return records.filter(
+        (item) => item && typeof item.url === 'string' && item.url.trim() !== ''
+    );
+}
+
+/** 当前页内存索引：已读文章页 url（规范化后）集合 */
+let readUrlSet = new Set();
+
+/** 由 storage 记录构建已读 url 集合 */
+function buildReadUrlSet(records) {
+    const set = new Set();
+    for (const item of sanitizeRecords(records)) {
+        set.add(normalizeArticleUrl(item.url));
+    }
+    return set;
 }
 
 /** 从 chrome.storage.local 读取已读记录列表 */
@@ -40,64 +53,54 @@ function getReadRecords() {
     return new Promise((resolve) => {
         chrome.storage.local.get(NEWS_IN_LEVELS_STORAGE_KEY, (result) => {
             const records = result[NEWS_IN_LEVELS_STORAGE_KEY];
-            resolve(Array.isArray(records) ? records : []);
+            resolve(sanitizeRecords(records));
         });
     });
 }
 
 /** 将已读记录列表写入 chrome.storage.local */
 function saveReadRecords(records) {
+    const sanitized = sanitizeRecords(records);
     return new Promise((resolve) => {
-        chrome.storage.local.set({ [NEWS_IN_LEVELS_STORAGE_KEY]: records }, resolve);
+        chrome.storage.local.set({ [NEWS_IN_LEVELS_STORAGE_KEY]: sanitized }, resolve);
     });
 }
 
-/** 判断 storage 中的一条记录是否与给定文章标题、等级相同 */
-function recordsMatch(record, articleTitle, level) {
-    return normalizeTitle(record.title) === normalizeTitle(articleTitle) && record.level === level;
+/** 判断 storage 中的一条记录是否与给定 url 相同 */
+function recordsMatch(record, articleUrl) {
+    return normalizeArticleUrl(record.url) === normalizeArticleUrl(articleUrl);
 }
 
-/** 切换某篇文章某一等级的已读状态（写入或删除记录） */
-async function toggleReadRecord(articleTitle, level, isCurrentlyRead) {
+/** 切换某一等级文章页 url 的已读状态（写入或删除记录） */
+async function toggleReadRecord(articleUrl, isCurrentlyRead) {
     const records = await getReadRecords();
+    const normalized = normalizeArticleUrl(articleUrl);
     let nextRecords;
 
     if (isCurrentlyRead) {
-        nextRecords = records.filter((record) => !recordsMatch(record, articleTitle, level));
+        nextRecords = records.filter((record) => !recordsMatch(record, normalized));
     } else {
         nextRecords = [
-            ...records.filter((record) => !recordsMatch(record, articleTitle, level)),
+            ...records.filter((record) => !recordsMatch(record, normalized)),
             {
-                title: formatArticleTitle(articleTitle),
-                level,
+                url: normalized,
                 markTime: Date.now(),
             },
         ];
     }
 
     await saveReadRecords(nextRecords);
-    readLevelsByTitle = buildReadLevelsMap(nextRecords);
+    readUrlSet = buildReadUrlSet(nextRecords);
     return nextRecords;
 }
 
 /** 加载 storage 并刷新内存中的已读索引 */
 async function loadFromStorage() {
     const records = await getReadRecords();
-    readLevelsByTitle = buildReadLevelsMap(records);
+    readUrlSet = buildReadUrlSet(records);
 }
 
-/** 从详情页 h2 去掉 “– level N” / “- level N” 后缀，得到文章标题 */
-function getDetailArticleTitle() {
-    const h2 = document.querySelector('.article-upper .article-title h2');
-    if (!h2) {
-        return null;
-    }
-    return formatArticleTitle(
-        h2.textContent.replace(/\s*[–-]\s*level\s+\d+\s*$/i, '')
-    );
-}
-
-/** 从等级链接文案中解析 Level N 的数字部分 */
+/** 从等级链接文案中解析 Level N 的数字部分（用于过滤非等级链接） */
 function parseLevelFromLink(link) {
     const match = link.textContent.trim().match(/^Level\s+(\d+)/);
     return match ? Number(match[1]) : null;
@@ -110,7 +113,7 @@ function applyReadState(link, icon, isRead) {
 }
 
 /** 创建等级按钮后的已读/未读图标，点击可切换 storage 且不触发链接跳转 */
-function createStatusIcon(link, articleTitle, level, isRead) {
+function createStatusIcon(link, isRead) {
     const img = document.createElement('img');
     img.src = chrome.runtime.getURL(isRead ? READED_ICON : UNREAD_ICON);
     img.alt = '';
@@ -125,11 +128,10 @@ function createStatusIcon(link, articleTitle, level, isRead) {
         e.preventDefault();
         e.stopPropagation();
 
-        const currentlyRead = readLevelsByTitle
-            .get(normalizeTitle(articleTitle))
-            ?.has(level) ?? false;
+        const articleUrl = normalizeArticleUrl(link.href);
+        const currentlyRead = readUrlSet.has(articleUrl);
 
-        toggleReadRecord(articleTitle, level, currentlyRead).then(() => {
+        toggleReadRecord(articleUrl, currentlyRead).then(() => {
             applyReadState(link, img, !currentlyRead);
         });
     });
@@ -138,22 +140,20 @@ function createStatusIcon(link, articleTitle, level, isRead) {
 }
 
 /** 在指定容器内为所有等级链接追加图标与已读状态（列表块或详情页共用） */
-function decorateLevelLinks(root, articleTitle) {
-    const readLevels = readLevelsByTitle.get(normalizeTitle(articleTitle)) ?? new Set();
-
+function decorateLevelLinks(root) {
     root.querySelectorAll('.fancy-buttons a').forEach((link) => {
         if (link.querySelector('[data-en-read-helper="status-icon"]')) {
             return;
         }
 
-        const level = parseLevelFromLink(link);
-        if (level == null) {
+        if (parseLevelFromLink(link) == null) {
             return;
         }
 
-        const isRead = readLevels.has(level);
+        const articleUrl = normalizeArticleUrl(link.href);
+        const isRead = readUrlSet.has(articleUrl);
         link.title = isRead ? '已读' : '未读';
-        link.appendChild(createStatusIcon(link, articleTitle, level, isRead));
+        link.appendChild(createStatusIcon(link, isRead));
     });
 }
 
@@ -165,12 +165,7 @@ function markArticleLevels() {
     }
 
     container.querySelectorAll('.news-block').forEach((block) => {
-        const titleEl = block.querySelector('.title h3 a');
-        if (!titleEl) {
-            return;
-        }
-
-        decorateLevelLinks(block, titleEl.textContent);
+        decorateLevelLinks(block);
     });
 }
 
@@ -181,12 +176,7 @@ function markDetailLevels() {
         return;
     }
 
-    const articleTitle = getDetailArticleTitle();
-    if (!articleTitle) {
-        return;
-    }
-
-    decorateLevelLinks(root, articleTitle);
+    decorateLevelLinks(root);
 }
 
 /** 加载已读数据并装饰列表页、详情页（二者互斥存在时只跑匹配到的那一侧） */
