@@ -31,9 +31,6 @@
       "js": [
         "src/NewsInLevles.js"
       ],
-      "css": [
-        "src/NewsInLevles.css"
-      ],
       "run_at": "document_end"
     },
     {
@@ -42,9 +39,6 @@
       ],
       "js": [
         "src/BreakingNewsEnglish.js"
-      ],
-      "css": [
-        "src/BreakingNewsEnglish.css"
       ],
       "run_at": "document_end"
     }

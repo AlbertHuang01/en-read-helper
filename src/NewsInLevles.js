@@ -1,3 +1,4 @@
+import "./NewsInLevles.css";
 console.log("NewsInLevels.js loaded");
 
 /** 已读状态图标路径 */
