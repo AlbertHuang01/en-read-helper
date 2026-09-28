@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,25 +8,60 @@
     <style>
         body {
             margin: 0;
-            padding: 12px 16px;
-            min-width: 140px;
+            padding: 10px;
+            min-width: 200px;
             font-family: system-ui, sans-serif;
             font-size: 14px;
         }
+
         button {
             cursor: pointer;
         }
+
         #status {
             margin-top: 8px;
             min-height: 1.2em;
             color: #333;
         }
+
+        .hightLight{
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        #highlightReadCount {
+            font-size: 13px;
+            color: #666;
+        }
+
+        #highlightReadCount[hidden] {
+            display: none !important;
+        }
+
+        #highlightReadRow{
+            display: flex;
+        }
+        #highlightReadCheckbox{
+            margin:0;
+            margin-right: 4px;
+        }
     </style>
 </head>
+
 <body>
     <button type="button" id="exportBtn">导出数据</button>
+    <button type="button" id="importBtn">导入数据</button>
+    <input type="file" id="importFileInput" accept=".json,application/json" hidden>
     <p id="status" aria-live="polite"></p>
+    <div class="hightLight">
+        <label id="highlightReadRow" hidden>
+            <input type="checkbox" id="highlightReadCheckbox">
+            <span>高亮已读文章</span>
+        </label>
+        <span id="highlightReadCount" hidden></span>
+    </div>
     <script type="module" src="popup.js"></script>
-    <!-- <script type="module" src="import-data.js"></script> -->
 </body>
+
 </html>

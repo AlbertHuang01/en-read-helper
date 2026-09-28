@@ -1,3 +1,7 @@
 :nth-child(1 of .fancy-buttons) a {
     padding: 6px 12px !important;
 }
+
+.fancy-buttons a.en-read-helper-read-highlight {
+    background-color: black !important;
+}
