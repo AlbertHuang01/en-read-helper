@@ -25,7 +25,7 @@ Chrome 扩展：在 [News in Levels](https://www.newsinlevels.com/) 与 [Breakin
 
 - 在列表与详情页的 Level 链接旁显示已读 / 未读图标。
 - 点击图标可切换该等级文章页的已读状态，不会触发链接跳转。
-- 在 News in Levels 标签页打开 Popup 时，可勾选「高亮已读文章」，已读的 Level 链接会加上高亮样式；勾选时显示当前已读条数。
+- 已读的 Level 按钮会显示黑底高亮，并配合已读图标；未读则无高亮。
 
 ### Breaking News English
 
@@ -59,12 +59,6 @@ Chrome 扩展：在 [News in Levels](https://www.newsinlevels.com/) 与 [Breakin
 2. 在文章或 Level 旁的图标上点击：未读变为已读，已读再次点击则取消。
 3. 状态会立即写入本地存储，同一页面上的图标会即时更新。
 
-### 高亮已读（仅 News in Levels）
-
-1. 在 News in Levels 的任意页面打开扩展 Popup。
-2. 勾选「高亮已读文章」；取消勾选则移除高亮。
-3. 勾选状态下会显示当前已读记录条数；切换选项后刷新列表或详情页即可看到 Level 链接高亮效果。
-
 ### 导出与导入数据
 
 适用于换电脑、重装浏览器或重装扩展前备份进度。
@@ -82,8 +76,9 @@ Chrome 扩展：在 [News in Levels](https://www.newsinlevels.com/) 与 [Breakin
 | 键名 | 含义 |
 | --- | --- |
 | `NewsInlevelsStorage` | News in Levels 已读记录数组 |
-| `NewsInlevelsHighlightRead` | 是否开启「高亮已读文章」（布尔值） |
 | `BreakingNewsEnglishStorage` | Breaking News English 已读记录数组 |
+
+旧版导出 JSON 中可能仍含已废弃的 `NewsInlevelsHighlightRead` 键，扩展已不再使用，不影响已读记录。
 
 每条已读记录格式：
 
@@ -128,7 +123,7 @@ assets/                 # 扩展图标、已读/未读 SVG
 src/
   background.js         # 工具栏图标与 Popup 启用规则
   popup.html
-  popup.js              # 导出/导入、高亮开关
+  popup.js              # 导出/导入
   NewsInLevles.js       # News in Levels 内容脚本
   NewsInLevles.css
   BreakingNewsEnglish.js

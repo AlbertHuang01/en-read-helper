@@ -8,11 +8,7 @@ const UNREAD_ICON = 'assets/unread.svg';
 
 /** chrome.storage.local 中 News in Levels 已读记录的键名 */
 const NEWS_IN_LEVELS_STORAGE_KEY = 'NewsInlevelsStorage';
-const HIGHLIGHT_READ_KEY = 'NewsInlevelsHighlightRead';
 const READ_HIGHLIGHT_CLASS = 'en-read-helper-read-highlight';
-
-/** 是否在已读 Level 按钮上显示高亮 */
-let highlightReadEnabled = false;
 
 /**
  * NewsInlevelsStorage 存 Array<ReadRecord>
@@ -105,34 +101,9 @@ async function loadFromStorage() {
     readUrlSet = buildReadUrlSet(records);
 }
 
-/** 读取「高亮已读」开关 */
-function loadHighlightSetting() {
-    return new Promise((resolve) => {
-        chrome.storage.local.get(HIGHLIGHT_READ_KEY, (result) => {
-            highlightReadEnabled = Boolean(result[HIGHLIGHT_READ_KEY]);
-            resolve();
-        });
-    });
-}
-
-/** 根据开关与已读状态更新 Level 链接高亮 */
+/** 根据已读状态更新 Level 链接高亮 */
 function applyLinkHighlight(link, isRead) {
-    if (highlightReadEnabled && isRead) {
-        link.classList.add(READ_HIGHLIGHT_CLASS);
-    } else {
-        link.classList.remove(READ_HIGHLIGHT_CLASS);
-    }
-}
-
-/** 刷新当前页所有 Level 链接的高亮 */
-function refreshAllLevelHighlights() {
-    document.querySelectorAll('.fancy-buttons a').forEach((link) => {
-        if (parseLevelFromLink(link) == null) {
-            return;
-        }
-        const articleUrl = normalizeArticleUrl(link.href);
-        applyLinkHighlight(link, readUrlSet.has(articleUrl));
-    });
+    link.classList.toggle(READ_HIGHLIGHT_CLASS, isRead);
 }
 
 /** 从等级链接文案中解析 Level N 的数字部分（用于过滤非等级链接） */
@@ -220,18 +191,9 @@ function markDetailLevels() {
 /** 加载已读数据并装饰列表页、详情页（二者互斥存在时只跑匹配到的那一侧） */
 async function initPage() {
     await loadFromStorage();
-    await loadHighlightSetting();
     markArticleLevels();
     markDetailLevels();
 }
-
-chrome.storage.onChanged.addListener((changes, areaName) => {
-    if (areaName !== 'local' || !changes[HIGHLIGHT_READ_KEY]) {
-        return;
-    }
-    highlightReadEnabled = Boolean(changes[HIGHLIGHT_READ_KEY].newValue);
-    refreshAllLevelHighlights();
-});
 
 /** DOM 就绪后再初始化，避免节点尚未插入 */
 function runWhenDomReady() {

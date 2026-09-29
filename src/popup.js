@@ -1,17 +1,3 @@
-/** chrome.storage.local 中 News in Levels 已读记录的键名；每项为 { url, markTime } */
-const NEWS_IN_LEVELS_STORAGE_KEY = 'NewsInlevelsStorage';
-const HIGHLIGHT_READ_KEY = 'NewsInlevelsHighlightRead';
-
-const NEWS_IN_LEVELS_HOSTS = new Set(['newsinlevels.com', 'www.newsinlevels.com']);
-
-function isNewsInLevelsUrl(url) {
-    try {
-        return NEWS_IN_LEVELS_HOSTS.has(new URL(url).hostname);
-    } catch {
-        return false;
-    }
-}
-
 function formatExportFilename() {
     const d = new Date();
     const pad = (n) => String(n).padStart(2, '0');
@@ -123,62 +109,7 @@ function exportStorageToFile() {
     });
 }
 
-function updateHighlightReadCount(checkboxChecked, recordCount) {
-    const el = document.getElementById('highlightReadCount');
-    if (!el) {
-        return;
-    }
-    if (checkboxChecked) {
-        el.textContent = `${recordCount}条已读`;
-        el.hidden = false;
-    } else {
-        el.hidden = true;
-    }
-}
-
-function refreshHighlightReadCount(checkbox) {
-    chrome.storage.local.get(NEWS_IN_LEVELS_STORAGE_KEY, (result) => {
-        const records = result[NEWS_IN_LEVELS_STORAGE_KEY];
-        const recordCount = Array.isArray(records) ? records.length : 0;
-        updateHighlightReadCount(checkbox.checked, recordCount);
-    });
-}
-
-function initHighlightReadCheckbox() {
-    const row = document.getElementById('highlightReadRow');
-    const checkbox = document.getElementById('highlightReadCheckbox');
-    if (!row || !checkbox) {
-        return;
-    }
-
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        const tab = tabs[0];
-        if (!tab?.url || !isNewsInLevelsUrl(tab.url)) {
-            return;
-        }
-
-        row.hidden = false;
-
-        chrome.storage.local.get([HIGHLIGHT_READ_KEY, NEWS_IN_LEVELS_STORAGE_KEY], (result) => {
-            checkbox.checked = Boolean(result[HIGHLIGHT_READ_KEY]);
-            const records = result[NEWS_IN_LEVELS_STORAGE_KEY];
-            const recordCount = Array.isArray(records) ? records.length : 0;
-            updateHighlightReadCount(checkbox.checked, recordCount);
-        });
-
-        checkbox.addEventListener('change', () => {
-            if (!checkbox.checked) {
-                updateHighlightReadCount(false, 0);
-            }
-            chrome.storage.local.set({ [HIGHLIGHT_READ_KEY]: checkbox.checked }, () => {
-                refreshHighlightReadCount(checkbox);
-            });
-        });
-    });
-}
-
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('exportBtn')?.addEventListener('click', exportStorageToFile);
     initImportButton();
-    initHighlightReadCheckbox();
 });
