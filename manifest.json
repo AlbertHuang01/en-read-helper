@@ -53,7 +53,9 @@
     {
       "resources": [
         "assets/readed.svg",
-        "assets/unread.svg"
+        "assets/unread.svg",
+        "assets/listened.svg",
+        "assets/unlistened.svg"
       ],
       "matches": [
         "https://www.newsinlevels.com/*"

@@ -1,7 +1,30 @@
-:nth-child(1 of .fancy-buttons) a {
-    padding: 6px 12px !important;
+﻿.fancy-buttons ul > li.en-read-helper-level-item {
+    position: relative;
+    display: inline-block;
+    vertical-align: top;
+    padding-bottom: 1.15em;
 }
 
-.fancy-buttons a.en-read-helper-read-highlight {
-    background-color: black !important;
+.en-read-helper-marks {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 0.35em;
+    justify-content: center;
+    line-height: 1;
+    pointer-events: auto;
+}
+
+.en-read-helper-marks img {
+    width: 1em;
+    height: 1em;
+    cursor: pointer;
+    display: block;
+    opacity: 0.45;
+}
+
+.en-read-helper-marks img.en-read-helper-mark-on {
+    opacity: 1;
 }
