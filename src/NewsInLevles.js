@@ -190,17 +190,26 @@ function createMarksRow(articleUrl) {
 
 function decorateLevelLinks(root) {
     root.querySelectorAll(".fancy-buttons li").forEach((li) => {
-        if (li.querySelector('[data-en-read-helper="marks"]')) {
-            return;
-        }
-
         const link = li.querySelector("a");
         if (!link || parseLevelFromLink(link) == null) {
             return;
         }
 
-        li.classList.add("en-read-helper-level-item");
         const articleUrl = normalizeArticleUrl(link.href);
+        const existingRow = li.querySelector('[data-en-read-helper="marks"]');
+        if (existingRow) {
+            const imgs = existingRow.querySelectorAll("img");
+            if (imgs.length >= 2) {
+                applyMarksUI(
+                    imgs[0],
+                    imgs[1],
+                    recordByUrl.get(articleUrl) ?? null
+                );
+            }
+            return;
+        }
+
+        li.classList.add("en-read-helper-level-item");
         li.appendChild(createMarksRow(articleUrl));
     });
 }
@@ -231,12 +240,23 @@ async function initPage() {
     markDetailLevels();
 }
 
+function setupNavigationListeners() {
+    // 多页站点后退常走 bfcache：文档不重载，需 pageshow(persisted) 再刷状态
+    window.addEventListener("pageshow", (event) => {
+        if (!event.persisted) {
+            return;
+        }
+        initPage();
+    });
+}
+
 function runWhenDomReady() {
     if (document.readyState === "loading") {
         document.addEventListener("DOMContentLoaded", initPage);
     } else {
         initPage();
     }
+    setupNavigationListeners();
 }
 
 runWhenDomReady();
